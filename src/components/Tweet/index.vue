@@ -20,7 +20,9 @@ export default {
         content: '',
         author: ''
       },
-      isVideoMode: false
+      isVideoMode: false,
+      isLoading: true,
+      hasError: false
     }
   },
   components: {
@@ -31,31 +33,33 @@ export default {
       this.likeNumber += 1
     },
     async randomUser() {
-      await axios
-        .get('https://randomuser.me/api/')
-        .then((response) => {
-          // handle success
-          const value = [...response.data.results][0]
-          // console.log(value);
-          this.userData.firstName = value.name.first
-          this.userData.lastName = value.name.last
-          this.userData.pictureUrl = value.picture.medium
-          this.userData.userId = value.id.name
-        })
-        .catch((error) => {
-          // handle error
-          console.log(error)
-        })
-        .then(() => {
-          // console.log(this.userData);
-        })
+      try {
+        const response = await axios.get('https://randomuser.me/api/')
+        const value = response.data.results[0]
+        this.userData.firstName = value.name.first
+        this.userData.lastName = value.name.last
+        this.userData.pictureUrl = value.picture.medium
+        this.userData.userId = value.id.name
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Fallback data
+        this.userData.firstName = 'Anonymous'
+        this.userData.lastName = 'User'
+        this.userData.pictureUrl = 'https://via.placeholder.com/48'
+        this.userData.userId = 'anonymous'
+      }
     },
     async getQuote() {
-      await axios.get('https://api.quotable.io/random/').then((response) => {
-        const data = response.data
-        this.tweetBody.content = data.content
-        this.tweetBody.author = data.author
-      })
+      try {
+        const response = await axios.get('https://api.quotable.io/random/')
+        this.tweetBody.content = response.data.content
+        this.tweetBody.author = response.data.author
+      } catch (error) {
+        console.error('Error fetching quote:', error)
+        // Fallback content
+        this.tweetBody.content = 'Welcome to Twitter Clone! This is a sample tweet.'
+        this.tweetBody.author = 'System'
+      }
     },
 
     setRandomValue() {
@@ -70,9 +74,15 @@ export default {
     }
   },
   async created() {
-    await this.getQuote()
-    await this.randomUser()
-    this.setRandomValue()
+    try {
+      await Promise.all([this.getQuote(), this.randomUser()])
+      this.setRandomValue()
+      this.isLoading = false
+    } catch (error) {
+      console.error('Error loading tweet data:', error)
+      this.hasError = true
+      this.isLoading = false
+    }
 
     setTimeout(() => {
       this.isVideoMode = true
@@ -82,40 +92,45 @@ export default {
 </script>
 
 <template>
-  <div id="tweet" v-show="isVideoMode">
-    <img :src="userData.pictureUrl" />
-    <!-- https://100k-faces.glitch.me/random-image" class="avatar-image -->
-    <div class="tweet-content">
-      <div class="user-info">
-        <p class="name">{{ userData.firstName + ' ' + userData.lastName }}</p>
-        <p class="username" v-show="userData.userId">@{{ userData.userId }}</p>
-        <span>•</span>
-        <p class="date">{{ date }}h</p>
-      </div>
-      <div class="tweet-body">
-        <p>
-          {{ tweetBody.content
-          }}<span class="hashtag">#{{ tweetBody.author }}</span>
-        </p>
-      </div>
-      <div class="buttons">
-        <div class="button" id="reply">
-          <icons icon="comment" />
-          <span v-show="replyNumber">{{ replyNumber }}</span>
-        </div>
-        <div class="button" id="retweet">
-          <icons icon="retweet" />
-          <span v-show="reTweetNumber">{{ reTweetNumber }}</span>
-        </div>
-        <div class="button" id="like">
-          <icons icon="like" />
-          <span v-show="likeNumber">{{ likeNumber }}</span>
-        </div>
-        <div class="button" id="share">
-          <icons icon="share" />
-        </div>
-      </div>
+  <div id="tweet" v-show="isVideoMode && !isLoading">
+    <div v-if="hasError" class="error-message">
+      Failed to load tweet data. Please try again later.
     </div>
+    <template v-else>
+      <img :src="userData.pictureUrl" />
+      <!-- https://100k-faces.glitch.me/random-image" class="avatar-image -->
+      <div class="tweet-content">
+        <div class="user-info">
+          <p class="name">{{ userData.firstName + ' ' + userData.lastName }}</p>
+          <p class="username" v-show="userData.userId">@{{ userData.userId }}</p>
+          <span>•</span>
+          <p class="date">{{ date }}h</p>
+        </div>
+        <div class="tweet-body">
+          <p>
+            {{ tweetBody.content
+            }}<span class="hashtag">#{{ tweetBody.author }}</span>
+          </p>
+        </div>
+        <div class="buttons">
+          <div class="button" id="reply">
+            <icons icon="comment" />
+            <span v-show="replyNumber">{{ replyNumber }}</span>
+          </div>
+          <div class="button" id="retweet">
+            <icons icon="retweet" />
+            <span v-show="reTweetNumber">{{ reTweetNumber }}</span>
+          </div>
+          <div class="button" id="like">
+            <icons icon="like" />
+            <span v-show="likeNumber">{{ likeNumber }}</span>
+          </div>
+          <div class="button" id="share">
+            <icons icon="share" />
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 <style scoped lang="scss">
@@ -128,6 +143,14 @@ export default {
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .error-message {
+    color: #e74c3c;
+    padding: 1rem;
+    background-color: #fdf2f2;
+    border-radius: 4px;
+    margin: 1rem 0;
   }
 
   img {
