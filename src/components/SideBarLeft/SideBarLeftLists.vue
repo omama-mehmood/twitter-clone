@@ -111,7 +111,6 @@ ul {
       border-radius: 9999px;
       display: inline-flex;
       align-items: center;
-      border-radius: 100px;
 
       &:hover {
         background-color: rgba(#1da1f2, 0.1);
@@ -142,7 +141,6 @@ ul {
       display: flex;
       align-items: center;
       justify-content: center;
-      align-items: center;
       cursor: pointer;
       width: 232px;
       height: 48px;
@@ -194,7 +192,6 @@ ul {
           margin-left: auto;
           margin-right: auto;
           margin-left: 0.4rem;
-          margin-right: 0.4rem;
         }
       }
       button {
