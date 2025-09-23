@@ -36,9 +36,6 @@ body {
 }
 
 #app {
-  // grid-template-columns: 275px 598px 350px;
-  // display: grid;
-  // grid-gap: 10px;
   display: flex;
   margin-left: auto;
   margin-right: auto;
@@ -47,6 +44,5 @@ body {
 #router-view {
   flex: auto;
   max-width: 600px;
-  // flex-grow: 40;
 }
 </style>
