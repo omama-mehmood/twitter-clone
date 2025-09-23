@@ -46,7 +46,6 @@ export default {
   #sidebar-left {
     width: 88px;
     height: 598px;
-    // overflow-x: auto;
   }
 }
 
